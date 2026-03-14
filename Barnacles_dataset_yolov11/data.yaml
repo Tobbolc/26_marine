@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 1
+names: ['barnacles']
+
+roboflow:
+  workspace: stephen-7b2qu
+  project: barnacles-lnd34
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/stephen-7b2qu/barnacles-lnd34/dataset/1
