@@ -1,0 +1,13 @@
+train: D:/deepLearning/ultralytics-8.3.163/datasets/barnacles/train/images
+val: D:/deepLearning/ultralytics-8.3.163/datasets/barnacles/val/images
+test: D:/deepLearning/ultralytics-8.3.163/datasets/barnacles/test/images
+
+nc: 1
+names: ['barnacles'] #只有一种类型
+
+roboflow:
+  workspace: stephen-7b2qu
+  project: barnacles-lnd34
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/stephen-7b2qu/barnacles-lnd34/dataset/1

@@ -1,0 +1,6 @@
+path: D:\a_学习\26海赛—面向海上风电桩基的摆线式推进清洗机器人\数据集\bivalve_filtered
+train: images/train
+val: images/val
+test: images/test
+names:
+- bivalves
