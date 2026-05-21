@@ -1,5 +1,5 @@
 """
-build_underwater_enhanced_dataset.py
+build_underwater_enhanced_dataset.py.
 
 用途：
 1. 读取现有 YOLO 检测数据集（目录式数据集 + dataset.yaml）
@@ -40,8 +40,8 @@ from __future__ import annotations
 
 import argparse
 import shutil
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Dict, Iterator, Optional
 
 import cv2
 import numpy as np
@@ -55,8 +55,7 @@ IMG_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
 #    这部分可以直接复用到你后续的单帧推理预处理里
 # ============================================================
 def adaptive_white_balance_bgr(img_bgr: np.ndarray) -> np.ndarray:
-    """
-    自适应白平衡 / 通道补偿（BGR 输入）
+    """自适应白平衡 / 通道补偿（BGR 输入）.
 
     作用：
     - 缓解水下图像常见的偏蓝、偏绿问题
@@ -80,8 +79,7 @@ def adaptive_white_balance_bgr(img_bgr: np.ndarray) -> np.ndarray:
 
 
 def clahe_on_l_channel(img_bgr: np.ndarray) -> np.ndarray:
-    """
-    在 LAB 空间的 L 通道上做 CLAHE（自适应直方图均衡）
+    """在 LAB 空间的 L 通道上做 CLAHE（自适应直方图均衡）.
 
     作用：
     - 提升暗部和局部区域的可见性
@@ -98,8 +96,7 @@ def clahe_on_l_channel(img_bgr: np.ndarray) -> np.ndarray:
 
 
 def soft_dehaze_like(img_bgr: np.ndarray) -> np.ndarray:
-    """
-    轻量“去雾式”局部对比增强
+    """轻量“去雾式”局部对比增强.
 
     说明：
     - 这里不是严格意义上的物理去雾
@@ -116,8 +113,7 @@ def soft_dehaze_like(img_bgr: np.ndarray) -> np.ndarray:
 
 
 def edge_preserving_refine(img_bgr: np.ndarray) -> np.ndarray:
-    """
-    边缘保留 + 轻微锐化
+    """边缘保留 + 轻微锐化.
 
     作用：
     - bilateralFilter 在降噪时尽量保留边缘
@@ -133,8 +129,7 @@ def edge_preserving_refine(img_bgr: np.ndarray) -> np.ndarray:
 
 
 def enhance_underwater_bgr(img_bgr: np.ndarray) -> np.ndarray:
-    """
-    完整水下增强主函数
+    """完整水下增强主函数.
 
     顺序：
     1) 自适应白平衡 / 通道补偿
@@ -152,21 +147,17 @@ def enhance_underwater_bgr(img_bgr: np.ndarray) -> np.ndarray:
 # ============================================================
 # 2) YOLO 数据集处理工具
 # ============================================================
-def load_dataset_cfg(yaml_path: Path) -> Dict:
-    """
-    读取原始数据集的 yaml 配置
-    """
-    with open(yaml_path, "r", encoding="utf-8") as f:
+def load_dataset_cfg(yaml_path: Path) -> dict:
+    """读取原始数据集的 yaml 配置."""
+    with open(yaml_path, encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
     if not isinstance(cfg, dict):
         raise ValueError(f"Invalid dataset yaml: {yaml_path}")
     return cfg
 
 
-def resolve_entry(dataset_root: Path, entry: Optional[str]) -> Optional[Path]:
-    """
-    将 train/val/test 在 yaml 里的相对路径解析成绝对路径
-    """
+def resolve_entry(dataset_root: Path, entry: str | None) -> Path | None:
+    """将 train/val/test 在 yaml 里的相对路径解析成绝对路径."""
     if entry is None:
         return None
     p = Path(entry)
@@ -176,9 +167,7 @@ def resolve_entry(dataset_root: Path, entry: Optional[str]) -> Optional[Path]:
 
 
 def replace_images_with_labels(path_obj: Path) -> Path:
-    """
-    将 .../images/... 路径替换成 .../labels/...
-    适用于标准 YOLO 目录式数据集
+    """将 .../images/... 路径替换成 .../labels/... 适用于标准 YOLO 目录式数据集.
     """
     parts = list(path_obj.parts)
     if "images" not in parts:
@@ -189,13 +178,9 @@ def replace_images_with_labels(path_obj: Path) -> Path:
 
 
 def ensure_clean_dir(path_obj: Path) -> None:
-    """
-    确保输出目录为空目录：
-    - 若已存在，则删除重建
-    - 若不存在，则直接创建
+    """确保输出目录为空目录： - 若已存在，则删除重建 - 若不存在，则直接创建.
 
-    注意：
-    这个操作会清空 out_root，请不要把 out_root 设到重要目录。
+    注意： 这个操作会清空 out_root，请不要把 out_root 设到重要目录。
     """
     if path_obj.exists():
         shutil.rmtree(path_obj)
@@ -203,9 +188,7 @@ def ensure_clean_dir(path_obj: Path) -> None:
 
 
 def copy_label(src_txt: Path, dst_txt: Path) -> None:
-    """
-    拷贝对应标签文件；如果原图无标签，则写空 txt
-    这样可以避免 YOLO 扫描数据集时报错
+    """拷贝对应标签文件；如果原图无标签，则写空 txt 这样可以避免 YOLO 扫描数据集时报错.
     """
     dst_txt.parent.mkdir(parents=True, exist_ok=True)
     if src_txt.exists():
@@ -215,9 +198,7 @@ def copy_label(src_txt: Path, dst_txt: Path) -> None:
 
 
 def iter_images(dir_path: Path) -> Iterator[Path]:
-    """
-    递归遍历目录中的所有图像文件
-    """
+    """递归遍历目录中的所有图像文件."""
     for p in sorted(dir_path.rglob("*")):
         if p.is_file() and p.suffix.lower() in IMG_EXTS:
             yield p
@@ -230,8 +211,7 @@ def iter_images(dir_path: Path) -> Iterator[Path]:
 #    - test: 原图
 # ============================================================
 def build_mixed_dataset(raw_yaml: str, out_root: str) -> str:
-    """
-    根据原始 YOLO 数据集构建新的混合数据集
+    """根据原始 YOLO 数据集构建新的混合数据集.
 
     参数：
         raw_yaml: 原始数据集 yaml 路径
@@ -255,7 +235,7 @@ def build_mixed_dataset(raw_yaml: str, out_root: str) -> str:
     }
 
     # 写入新的数据集 yaml
-    new_cfg: Dict[str, object] = {
+    new_cfg: dict[str, object] = {
         "path": str(out_root_path),
         "train": "images/train",
         "val": "images/val",
@@ -274,10 +254,7 @@ def build_mixed_dataset(raw_yaml: str, out_root: str) -> str:
 
         in_img_dir = resolve_entry(dataset_root, entry)
         if in_img_dir is None or not in_img_dir.exists() or not in_img_dir.is_dir():
-            raise ValueError(
-                f"当前脚本假设 YOLO 数据集采用目录式组织。"
-                f"split='{split}' 解析后路径为: {in_img_dir}"
-            )
+            raise ValueError(f"当前脚本假设 YOLO 数据集采用目录式组织。split='{split}' 解析后路径为: {in_img_dir}")
 
         in_lbl_dir = replace_images_with_labels(in_img_dir)
         out_img_dir = out_root_path / "images" / split
@@ -336,8 +313,7 @@ def build_mixed_dataset(raw_yaml: str, out_root: str) -> str:
 # 4) 给后续主程序复用的单帧预处理接口
 # ============================================================
 def preprocess_frame_for_inference(frame_bgr: np.ndarray) -> np.ndarray:
-    """
-    后续如果你在实时视频主程序中做单帧增强，可以直接调用这个函数。
+    """后续如果你在实时视频主程序中做单帧增强，可以直接调用这个函数。.
 
     典型接法（伪代码）：
         cap = cv2.VideoCapture(0)  # 或 RTSP / 视频文件
@@ -359,9 +335,7 @@ def preprocess_frame_for_inference(frame_bgr: np.ndarray) -> np.ndarray:
 # 5) 命令行入口
 # ============================================================
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="构建 YOLO 用的水下增强混合数据集（train=原图+增强图，val/test=原图）"
-    )
+    parser = argparse.ArgumentParser(description="构建 YOLO 用的水下增强混合数据集（train=原图+增强图，val/test=原图）")
     parser.add_argument(
         "--data-yaml",
         type=str,
