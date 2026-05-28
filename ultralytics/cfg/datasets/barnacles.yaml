@@ -3,7 +3,7 @@ val: D:/deepLearning/ultralytics-8.3.163/datasets/barnacles/val/images
 test: D:/deepLearning/ultralytics-8.3.163/datasets/barnacles/test/images
 
 nc: 1
-names: ['barnacles'] #只有一种类型
+names: ["barnacles"] #只有一种类型
 
 roboflow:
   workspace: stephen-7b2qu
