@@ -1,15 +1,16 @@
-# -*- coding: utf-8 -*-
 """
 海康网络相机 RTSP 实时预览脚本
 用法:
-    python camera_rtsp_preview.py
+    python camera_rtsp_preview.py.
 
 按 'q' 退出
 按 's' 截图保存到当前目录
 """
-import cv2
-import time
+
 import sys
+import time
+
+import cv2
 
 # --- 配置 ---
 # 主码流 1920x1080（用于YOLO推理），子码流 640x360（低延迟预览）
@@ -22,6 +23,7 @@ WINDOW_NAME = "Hikvision Camera (RTSP) - Press Q to quit, S to screenshot"
 # ffmpeg 后端参数（Windows 上优化延迟）
 # CAP_FFMPEG 使用 -fflags nobuffer 减少缓冲
 import os
+
 os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|fflags;nobuffer|flags;low_delay"
 
 
@@ -64,15 +66,14 @@ def main():
             t_start = time.time()
 
         # 在画面上显示FPS
-        cv2.putText(frame, f"FPS: {fps_display:.1f}", (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        cv2.putText(frame, f"FPS: {fps_display:.1f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
         cv2.imshow(WINDOW_NAME, frame)
 
         key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
+        if key == ord("q"):
             break
-        elif key == ord('s'):
+        elif key == ord("s"):
             filename = f"screenshot_{time.strftime('%Y%m%d_%H%M%S')}.jpg"
             cv2.imwrite(filename, frame)
             print(f"Saved: {filename}")
