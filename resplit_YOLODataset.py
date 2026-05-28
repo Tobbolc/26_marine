@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
-重新划分 YOLO 目标检测数据集（train / val / test）
+重新划分 YOLO 目标检测数据集（train / val / test）.
 
 适用场景：
 - 现有目录结构类似：
@@ -26,6 +25,8 @@
 5. 图片和对应 label 一起复制到新的输出目录
 """
 
+from __future__ import annotations
+
 import argparse
 import hashlib
 import math
@@ -34,7 +35,6 @@ import shutil
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tif", ".tiff"}
 BG_CLASS = "__background__"
@@ -44,7 +44,7 @@ BG_CLASS = "__background__"
 class Item:
     source_split: str
     image_path: Path
-    label_path: Optional[Path]
+    label_path: Path | None
     rel_path: Path
     stem: str
     image_hash: str
@@ -56,7 +56,7 @@ class Item:
 @dataclass
 class Group:
     group_id: str
-    items: List[Item] = field(default_factory=list)
+    items: list[Item] = field(default_factory=list)
     box_counts: Counter = field(default_factory=Counter)
 
     @property
@@ -128,12 +128,12 @@ def file_md5(path: Path, chunk_size: int = 1024 * 1024) -> str:
     return md5.hexdigest()
 
 
-def parse_yolo_label(label_path: Path) -> Tuple[Counter, int, set]:
+def parse_yolo_label(label_path: Path) -> tuple[Counter, int, set]:
     box_counts = Counter()
     class_set = set()
     num_boxes = 0
 
-    with open(label_path, "r", encoding="utf-8") as f:
+    with open(label_path, encoding="utf-8") as f:
         for line_no, raw in enumerate(f, start=1):
             line = raw.strip()
             if not line:
@@ -156,8 +156,8 @@ def parse_yolo_label(label_path: Path) -> Tuple[Counter, int, set]:
     return box_counts, num_boxes, class_set
 
 
-def find_items(input_root: Path, source_splits: List[str], allow_missing_label: bool) -> List[Item]:
-    items: List[Item] = []
+def find_items(input_root: Path, source_splits: list[str], allow_missing_label: bool) -> list[Item]:
+    items: list[Item] = []
 
     for split in source_splits:
         images_dir = input_root / split / "images"
@@ -222,8 +222,8 @@ def choose_group_key(item: Item, mode: str) -> str:
     return f"hash::{item.image_hash}"
 
 
-def build_groups(items: List[Item], group_mode: str) -> List[Group]:
-    groups_map: Dict[str, Group] = {}
+def build_groups(items: list[Item], group_mode: str) -> list[Group]:
+    groups_map: dict[str, Group] = {}
     for item in items:
         gid = choose_group_key(item, group_mode)
         groups_map.setdefault(gid, Group(group_id=gid))
@@ -232,8 +232,14 @@ def build_groups(items: List[Item], group_mode: str) -> List[Group]:
     return list(groups_map.values())
 
 
-def compute_targets(total_images: int, train_ratio: float, val_ratio: float, test_ratio: float,
-                    min_val_images: int, min_test_images: int):
+def compute_targets(
+    total_images: int,
+    train_ratio: float,
+    val_ratio: float,
+    test_ratio: float,
+    min_val_images: int,
+    min_test_images: int,
+):
     val_target = max(min_val_images, round(total_images * val_ratio))
     test_target = max(min_test_images, round(total_images * test_ratio))
     if val_target + test_target >= total_images:
@@ -242,7 +248,7 @@ def compute_targets(total_images: int, train_ratio: float, val_ratio: float, tes
     return {"train": train_target, "val": val_target, "test": test_target}
 
 
-def class_weights_from_counts(total_box_counts: Counter) -> Dict[object, float]:
+def class_weights_from_counts(total_box_counts: Counter) -> dict[object, float]:
     return {cls: 1.0 / math.sqrt(max(cnt, 1)) for cls, cnt in total_box_counts.items()}
 
 
@@ -253,12 +259,14 @@ def group_priority(group: Group, global_box_counts: Counter):
     return (-rarity, -len(group.class_set), -group.size)
 
 
-def incremental_cost(current_images: int,
-                     target_images: int,
-                     current_box_counts: Counter,
-                     target_box_counts: Dict[object, float],
-                     group: Group,
-                     class_weights: Dict[object, float]) -> float:
+def incremental_cost(
+    current_images: int,
+    target_images: int,
+    current_box_counts: Counter,
+    target_box_counts: dict[object, float],
+    group: Group,
+    class_weights: dict[object, float],
+) -> float:
     before_img_gap = abs(current_images - target_images) / max(target_images, 1)
     after_images = current_images + group.size
     after_img_gap = abs(after_images - target_images) / max(target_images, 1)
@@ -283,11 +291,9 @@ def incremental_cost(current_images: int,
     return (1.0 * delta_img) + (2.0 * delta_cls) + overshoot_penalty + size_penalty
 
 
-def select_groups_for_split(candidates: List[Group],
-                            target_images: int,
-                            split_ratio: float,
-                            global_box_counts: Counter,
-                            rng: random.Random):
+def select_groups_for_split(
+    candidates: list[Group], target_images: int, split_ratio: float, global_box_counts: Counter, rng: random.Random
+):
     if target_images <= 0:
         return [], candidates[:]
 
@@ -355,7 +361,7 @@ def select_groups_for_split(candidates: List[Group],
     return chosen, remaining
 
 
-def assign_splits(groups: List[Group], targets: Dict[str, int], rng: random.Random):
+def assign_splits(groups: list[Group], targets: dict[str, int], rng: random.Random):
     total_box_counts = Counter()
     for g in groups:
         total_box_counts.update(g.box_counts)
@@ -383,7 +389,7 @@ def assign_splits(groups: List[Group], targets: Dict[str, int], rng: random.Rand
     return {"train": train_groups, "val": val_groups, "test": test_groups}
 
 
-def flatten_assignments(assignments: Dict[str, List[Group]]) -> Dict[str, List[Item]]:
+def flatten_assignments(assignments: dict[str, list[Group]]) -> dict[str, list[Item]]:
     out = {"train": [], "val": [], "test": []}
     for split, groups in assignments.items():
         for group in groups:
@@ -418,7 +424,7 @@ def copy_metadata_files(input_root: Path, output_root: Path):
             shutil.copy2(src, output_root / name)
 
 
-def summarize_items(name: str, items: List[Item]) -> str:
+def summarize_items(name: str, items: list[Item]) -> str:
     img_count = len(items)
     box_counts = Counter()
     empty_images = 0
