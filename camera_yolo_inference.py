@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 """
-海康网络相机 RTSP 取流 + YOLO 藤壶检测实时推理（低延迟版）
+海康网络相机 RTSP 取流 + YOLO 藤壶检测实时推理（低延迟版）.
 
 延迟优化策略:
   1. UDP 传输 — 网线直连/PLC 下比 TCP 延迟低（无重传等待）
@@ -13,12 +12,15 @@
 
 按 'q' 退出 / 's' 截图 / 'p' 暂停
 """
-import cv2
-import time
-import sys
+
 import os
+import sys
 import threading
+import time
 from collections import deque
+
+import cv2
+
 from ultralytics import YOLO
 
 # ============================================================
@@ -45,8 +47,9 @@ WINDOW_NAME = "Barnacle Detection - Q:quit S:save P:pause"
 # 低延迟取帧器
 # ============================================================
 
+
 class LowLatencyCapture:
-    """后台线程持续取帧，只保留最新帧，丢弃 OpenCV 内部缓冲"""
+    """后台线程持续取帧，只保留最新帧，丢弃 OpenCV 内部缓冲."""
 
     def __init__(self, url, transport="udp"):
         self.url = url
@@ -136,6 +139,7 @@ class LowLatencyCapture:
 # 主程序
 # ============================================================
 
+
 def main():
     if not os.path.exists(MODEL_PATH):
         print(f"[ERROR] Model not found: {MODEL_PATH}")
@@ -173,8 +177,10 @@ def main():
         if not paused:
             t0 = time.time()
             results = model.predict(
-                frame, imgsz=INFERENCE_SIZE,
-                conf=CONF_THRESHOLD, iou=IOU_THRESHOLD,
+                frame,
+                imgsz=INFERENCE_SIZE,
+                conf=CONF_THRESHOLD,
+                iou=IOU_THRESHOLD,
                 verbose=False,
             )
             dt = time.time() - t0
@@ -182,26 +188,32 @@ def main():
             plotted = results[0].plot()
         else:
             plotted = frame.copy()
-            cv2.putText(plotted, "PAUSED", (10, 70),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
+            cv2.putText(plotted, "PAUSED", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
 
         if infer_times:
             avg = sum(infer_times) / len(infer_times)
-            cv2.putText(plotted, f"Infer: {1/avg:.1f} FPS ({avg*1000:.0f}ms)",
-                        (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+            cv2.putText(
+                plotted,
+                f"Infer: {1 / avg:.1f} FPS ({avg * 1000:.0f}ms)",
+                (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (0, 255, 0),
+                2,
+            )
 
         status_color = (0, 255, 0) if not paused else (0, 0, 255)
         cv2.circle(plotted, (plotted.shape[1] - 20, 20), 8, status_color, -1)
         cv2.imshow(WINDOW_NAME, plotted)
 
         key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
+        if key == ord("q"):
             break
-        elif key == ord('s'):
+        elif key == ord("s"):
             fname = f"screenshot_{time.strftime('%Y%m%d_%H%M%S')}.jpg"
             cv2.imwrite(fname, plotted)
             print(f"Saved: {fname}")
-        elif key == ord('p'):
+        elif key == ord("p"):
             paused = not paused
             print(f"Paused: {paused}")
 

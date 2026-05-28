@@ -6,12 +6,8 @@ def main():
     model = YOLO(BEST_PT)
 
     # 导出 ONNX（用于通用验证/以及给 TensorRT 构建 engine）
-    model.export(
-        format="onnx",
-        opset=12,
-        simplify=True,
-        imgsz=640
-    )
+    model.export(format="onnx", opset=12, simplify=True, imgsz=640)
+
 
 if __name__ == "__main__":
     main()
