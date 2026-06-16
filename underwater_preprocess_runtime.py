@@ -36,7 +36,6 @@ import argparse
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -46,8 +45,7 @@ import numpy as np
 # 1) 基础图像增强函数
 # =========================
 def adaptive_white_balance_bgr(img_bgr: np.ndarray) -> np.ndarray:
-    """
-    自适应白平衡 / 通道增益补偿（BGR 输入）
+    """自适应白平衡 / 通道增益补偿（BGR 输入）.
 
     思路：
     - 统计 B/G/R 三个通道的全局均值
@@ -75,10 +73,9 @@ def adaptive_white_balance_bgr(img_bgr: np.ndarray) -> np.ndarray:
 def clahe_on_l_channel(
     img_bgr: np.ndarray,
     clip_limit: float = 2.0,
-    tile_grid_size: Tuple[int, int] = (8, 8),
+    tile_grid_size: tuple[int, int] = (8, 8),
 ) -> np.ndarray:
-    """
-    在 LAB 色彩空间的 L 通道上做 CLAHE。
+    """在 LAB 色彩空间的 L 通道上做 CLAHE。.
 
     作用：
     - 提升局部对比度
@@ -101,11 +98,9 @@ def soft_dehaze_like(
     sigma: float = 15.0,
     amount: float = 0.20,
 ) -> np.ndarray:
-    """
-    轻量“去雾式”局部对比增强。
+    """轻量“去雾式”局部对比增强。.
 
-    这不是严格意义上的水下去雾/去散射算法，
-    更接近“低频背景抑制 + 局部对比提升”。
+    这不是严格意义上的水下去雾/去散射算法， 更接近“低频背景抑制 + 局部对比提升”。
 
     数学形式近似：
         out = img + amount * (img - blur(img))
@@ -134,8 +129,7 @@ def edge_preserving_refine(
     sigma_space: float = 9.0,
     sharpen_gain: float = 0.12,
 ) -> np.ndarray:
-    """
-    边缘保留平滑 + 轻微锐化。
+    """边缘保留平滑 + 轻微锐化。.
 
     过程：
     1) 先做双边滤波，抑制噪声，但尽量保留边缘
@@ -147,7 +141,7 @@ def edge_preserving_refine(
 
     实际部署建议：
     - 若画面分辨率高（例如 1920x1080）且 PC 端实时性吃紧，
-      可以只对“送入检测器的分辨率”做增强，而不是对原始全分辨率做增强。
+    可以只对“送入检测器的分辨率”做增强，而不是对原始全分辨率做增强。
     """
     smooth = cv2.bilateralFilter(img_bgr, d=d, sigmaColor=sigma_color, sigmaSpace=sigma_space)
     sharp = cv2.addWeighted(img_bgr, 1.0 + sharpen_gain, smooth, -sharpen_gain, 0)
@@ -162,8 +156,7 @@ def enhance_underwater_bgr(
     enable_dehaze_like: bool = True,
     enable_refine: bool = True,
 ) -> np.ndarray:
-    """
-    按顺序执行整条水下增强链路。
+    """按顺序执行整条水下增强链路。.
 
     推荐顺序：
         白平衡 -> CLAHE -> 局部对比增强 -> 边缘保留轻锐化
@@ -187,23 +180,21 @@ def enhance_underwater_bgr(
 # =========================
 @dataclass
 class FrameQuality:
-    """
-    简单的帧质量指标。
+    """简单的帧质量指标。.
 
     这些指标不是“绝对标准”，而是工程上的启发式量：
     - brightness: 平均亮度
     - contrast: 灰度标准差
     - focus: 拉普拉斯方差，常用于模糊检测
     """
+
     brightness: float
     contrast: float
     focus: float
 
 
 def estimate_frame_quality(frame_bgr: np.ndarray) -> FrameQuality:
-    """
-    估计当前帧的亮度、对比度、清晰度。
-    """
+    """估计当前帧的亮度、对比度、清晰度。."""
     gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
     brightness = float(np.mean(gray))
     contrast = float(np.std(gray))
@@ -218,8 +209,7 @@ def is_bad_frame(
     max_brightness: float = 245.0,
     min_focus: float = 20.0,
 ) -> bool:
-    """
-    粗略判断是否为“异常帧”。
+    """粗略判断是否为“异常帧”。.
 
     可用于：
     - 严重过暗 / 过曝
@@ -254,18 +244,17 @@ def preprocess_frame_for_inference(
     enable_dehaze_like: bool = True,
     enable_refine: bool = True,
 ) -> np.ndarray:
-    """
-    给检测主程序调用的单帧预处理函数。
+    """给检测主程序调用的单帧预处理函数。.
 
     参数设计说明：
     ------------
     1) use_quality_gate:
-       - False: 无条件执行完整增强
-       - True : 先做帧质量分析，再决定增强策略
+    - False: 无条件执行完整增强
+    - True : 先做帧质量分析，再决定增强策略
 
     2) force_skip_on_bad_frame:
-       - 若为 True，且判断为异常帧，则直接返回原帧
-       - 适合你想把“是否丢帧”逻辑放到更上层控制时使用
+    - 若为 True，且判断为异常帧，则直接返回原帧
+    - 适合你想把“是否丢帧”逻辑放到更上层控制时使用
 
     推荐工程用法：
     -------------
@@ -318,9 +307,8 @@ def preprocess_frame_for_inference(
 # =========================
 # 4) 给主程序接摄像头/视频流的示例骨架
 # =========================
-def open_video_source(source: Union[int, str]) -> cv2.VideoCapture:
-    """
-    打开视频源。
+def open_video_source(source: int | str) -> cv2.VideoCapture:
+    """打开视频源。.
 
     source 可以是：
     - 0 / 1 / 2 ...           本地 USB 摄像头
@@ -329,8 +317,7 @@ def open_video_source(source: Union[int, str]) -> cv2.VideoCapture:
     - "http://..."            某些网络视频流
     - 采集卡对应的设备号
 
-    如果你们水下链路最终是“岸上 PC 通过某个采集卡/解码器拿到视频”，
-    通常这里会落到两种接法：
+    如果你们水下链路最终是“岸上 PC 通过某个采集卡/解码器拿到视频”， 通常这里会落到两种接法：
     1) OpenCV 直接 VideoCapture(设备号)
     2) OpenCV 直接 VideoCapture(RTSP URL)
 
@@ -345,15 +332,14 @@ def open_video_source(source: Union[int, str]) -> cv2.VideoCapture:
 
 
 def run_preprocess_demo(
-    source: Union[int, str],
+    source: int | str,
     *,
-    save_path: Optional[str] = None,
+    save_path: str | None = None,
     show: bool = True,
     use_quality_gate: bool = False,
     skip_bad_frames: bool = False,
 ) -> None:
-    """
-    预处理演示函数。
+    """预处理演示函数。.
 
     这个函数的作用不是替代你的正式主程序，而是帮你快速做三件事：
     1) 检查视频流是否能正常进入 PC
@@ -438,8 +424,7 @@ def run_preprocess_demo(
 # 5) 你后续真正主程序里，推荐这样接入
 # =========================
 def example_runtime_pipeline_note() -> None:
-    """
-    这里只写说明，不执行任何逻辑。
+    """这里只写说明，不执行任何逻辑。.
 
     推荐你的视觉主程序框架大致如下：
 
@@ -519,10 +504,8 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def parse_source(source_text: str) -> Union[int, str]:
-    """
-    命令行里如果写的是 "0"，这里会转成整数 0；
-    如果是文件路径或 RTSP URL，则保持字符串。
+def parse_source(source_text: str) -> int | str:
+    """命令行里如果写的是 "0"，这里会转成整数 0； 如果是文件路径或 RTSP URL，则保持字符串。.
     """
     if source_text.isdigit():
         return int(source_text)

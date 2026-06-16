@@ -26,10 +26,8 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Union
 
 from ultralytics import YOLO
-
 
 # =========================
 # 1) 默认参数（可在命令行覆盖）
@@ -39,8 +37,8 @@ DEFAULT_MODEL = "yolo11n.pt"
 DEFAULT_PROJECT = "runs/barnacles"
 
 IMG_SIZE = 640
-DEVICE: Union[int, str] = 0          # 有 GPU 时一般为 0；无 GPU 可改成 "cpu"
-WORKERS = 0                          # Windows 常用 0；Linux 可按机器情况增大
+DEVICE: int | str = 0  # 有 GPU 时一般为 0；无 GPU 可改成 "cpu"
+WORKERS = 0  # Windows 常用 0；Linux 可按机器情况增大
 BATCH = 16
 SEED = 42
 
@@ -57,12 +55,11 @@ def train_two_stage(
     phase2_name: str = "y11n_mixenh_phase2_full",
     imgsz: int = IMG_SIZE,
     batch: int = BATCH,
-    device: Union[int, str] = DEVICE,
+    device: int | str = DEVICE,
     workers: int = WORKERS,
     seed: int = SEED,
 ) -> Path:
-    """
-    两阶段训练。
+    """两阶段训练。.
 
     Phase 1：
         - 冻结 backbone 的前一部分层
@@ -97,7 +94,7 @@ def train_two_stage(
         seed=seed,
         deterministic=True,
         amp=True,
-        freeze=10,                 # 冻结部分主干层
+        freeze=10,  # 冻结部分主干层
         optimizer="AdamW",
         lr0=0.002,
         lrf=0.01,
@@ -126,8 +123,7 @@ def train_two_stage(
     phase1_best = Path(project) / phase1_name / "weights" / "best.pt"
     if not phase1_best.exists():
         raise FileNotFoundError(
-            f"Phase 1 best weights not found: {phase1_best}\n"
-            f"请检查训练是否正常结束，或 project/name 是否被你改过。"
+            f"Phase 1 best weights not found: {phase1_best}\n请检查训练是否正常结束，或 project/name 是否被你改过。"
         )
 
     # -------------------------
@@ -145,7 +141,7 @@ def train_two_stage(
         seed=seed,
         deterministic=True,
         amp=True,
-        freeze=0,                  # 全量解冻
+        freeze=0,  # 全量解冻
         optimizer="AdamW",
         lr0=0.001,
         lrf=0.01,
@@ -173,10 +169,7 @@ def train_two_stage(
 
     phase2_best = Path(project) / phase2_name / "weights" / "best.pt"
     if not phase2_best.exists():
-        raise FileNotFoundError(
-            f"Phase 2 best weights not found: {phase2_best}\n"
-            f"请检查 Phase 2 训练是否正常结束。"
-        )
+        raise FileNotFoundError(f"Phase 2 best weights not found: {phase2_best}\n请检查 Phase 2 训练是否正常结束。")
 
     return phase2_best
 
@@ -191,13 +184,12 @@ def evaluate_model(
     split: str = "val",
     imgsz: int = IMG_SIZE,
     batch: int = BATCH,
-    device: Union[int, str] = DEVICE,
+    device: int | str = DEVICE,
     workers: int = WORKERS,
     project: str = DEFAULT_PROJECT,
     name: str = "eval",
 ) -> None:
-    """
-    统一的评估函数。
+    """统一的评估函数。.
 
     split 可选：
     - "val"  : 验证集
@@ -291,10 +283,8 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def normalize_device(device_text: str) -> Union[int, str]:
-    """
-    命令行字符串转成 Ultralytics 可接受的 device 格式。
-    """
+def normalize_device(device_text: str) -> int | str:
+    """命令行字符串转成 Ultralytics 可接受的 device 格式。."""
     if device_text.isdigit():
         return int(device_text)
     return device_text

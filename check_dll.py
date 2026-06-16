@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 import os
-import sys
 import platform
+import sys
 from ctypes import *
 from ctypes import wintypes
 
