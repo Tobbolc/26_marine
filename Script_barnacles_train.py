@@ -3,13 +3,14 @@ from ultralytics import YOLO
 # train 204 / val 26 / test 25
 # 目标：yolo11n + 强化水下增强 + 两阶段（先冻后放）避免小数据过拟合
 
+
 def main():
     DATA_YAML = "barnacles_mix_enh.yaml"
     IMG_SIZE = 640  # 与 Jetson 端部署对齐，先用 640 稳定跑到 15-30fps
-    DEVICE = 0      # RTX 4060
+    DEVICE = 0  # RTX 4060
     # Windows 若 DataLoader 报错，把 workers 改成 0
     WORKERS = 0
-    BATCH = 16      # 4060 16GB 通常足够跑 yolo11n@640；如OOM改 8/4 或 batch=-1 自动
+    BATCH = 16  # 4060 16GB 通常足够跑 yolo11n@640；如OOM改 8/4 或 batch=-1 自动
 
     # -------------------------
     # Phase 1：冻住 backbone，先让 head 适应藤壶/海生物
@@ -90,7 +91,6 @@ def main():
         mosaic=0.20,
         mixup=0.0,
         close_mosaic=15,
-
         project="runs/barnacles",
         name="para1_mixenh_phase2_full",
         plots=True,
