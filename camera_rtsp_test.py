@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 RTSP 连接测试脚本
 依次尝试常见的海康网络摄像机 RTSP 地址，
-找到能用的后打印出来并尝试显示一帧画面。
+找到能用的后打印出来并尝试显示一帧画面。.
 """
+
 import cv2
 
 CAMERA_IP = "192.168.1.64"
@@ -17,15 +17,15 @@ PASSWORDS = ["Xdj20060318@"]
 
 # RTSP 路径模板 (user:pass@ip:port/path)
 PATH_TEMPLATES = [
-    "rtsp://{user}:{pw}@{ip}:{port}/Streaming/Channels/101",   # Hikvision 主码流
-    "rtsp://{user}:{pw}@{ip}:{port}/Streaming/Channels/102",   # Hikvision 子码流
-    "rtsp://{user}:{pw}@{ip}:{port}/Streaming/Channels/1",     # 另一种格式
-    "rtsp://{ip}:{port}/Streaming/Channels/101",               # 无认证
-    "rtsp://{ip}:{port}/Streaming/Channels/102",               # 无认证
-    "rtsp://{ip}/Streaming/Channels/101",                      # 默认554端口
+    "rtsp://{user}:{pw}@{ip}:{port}/Streaming/Channels/101",  # Hikvision 主码流
+    "rtsp://{user}:{pw}@{ip}:{port}/Streaming/Channels/102",  # Hikvision 子码流
+    "rtsp://{user}:{pw}@{ip}:{port}/Streaming/Channels/1",  # 另一种格式
+    "rtsp://{ip}:{port}/Streaming/Channels/101",  # 无认证
+    "rtsp://{ip}:{port}/Streaming/Channels/102",  # 无认证
+    "rtsp://{ip}/Streaming/Channels/101",  # 默认554端口
     "rtsp://{user}:{pw}@{ip}:{port}/h264/ch1/main/av_stream",  # 通用RTSP
     "rtsp://{user}:{pw}@{ip}:{port}/h265/ch1/main/av_stream",  # H.265
-    "rtsp://{user}:{pw}@{ip}:{port}/live",                     # 另一种
+    "rtsp://{user}:{pw}@{ip}:{port}/live",  # 另一种
     "rtsp://{ip}:{port}/live",
     "rtsp://{ip}:8554/live",
     "rtsp://{user}:{pw}@{ip}:{port}/cam/realmonitor?channel=1&subtype=0",
@@ -64,12 +64,12 @@ for url in urls_to_try:
     except Exception as e:
         print(f"  [ERR] {url} - {e}")
 
-print(f"\n{'='*60}")
+print(f"\n{'=' * 60}")
 if working_urls:
     print(f"\nFound {len(working_urls)} working RTSP URLs:")
     for u in working_urls:
         print(f"  {u}")
-    print(f"\nTry: python camera_rtsp_preview.py \"{working_urls[0]}\"")
+    print(f'\nTry: python camera_rtsp_preview.py "{working_urls[0]}"')
 else:
     print("\nNo working RTSP URL found.")
     print("\n可能的原因:")
